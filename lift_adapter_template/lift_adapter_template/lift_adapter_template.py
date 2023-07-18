@@ -23,9 +23,10 @@ from yaml import YAMLObject
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_system_default
-from rmf_lift_msgs.msg import LiftState, LiftRequest
+from rmf_lift_msgs.msg import LiftState, LiftRequest, LiftFloor
 
 from .LiftAPI import LiftAPI
+
 
 '''
     The LiftAdapterTemplate is a node which provide updates to Open-RMF, as well
@@ -42,6 +43,18 @@ class LiftAdapterTemplate(Node):
         self.lift_state = None
         self.lift_request = None
 
+        #CUSTOM SUBSCRIPTION TO LIFT FLOOR
+        self.subscription = self.create_subscription(
+            LiftFloor, 
+            '/lift_current_floor', 
+            self.lift_current_floor_callback, 
+            10)
+        
+        #INITIALIZE VARIABLE
+        self.lift_current_floor = '0'
+        self.switch = 0
+        self.door_state = 0
+
         # Initialize status
         self.get_logger().info('Initializing with status.')
         self.lift_state = self._lift_state()
@@ -54,14 +67,21 @@ class LiftAdapterTemplate(Node):
             LiftState,
             'lift_states',
             qos_profile=qos_profile_system_default)
+            
         self.lift_request_sub = self.create_subscription(
             LiftRequest,
             'lift_requests',
             self.lift_request_callback,
             qos_profile=qos_profile_system_default)
+            
         self.update_timer = self.create_timer(0.5, self.update_callback)
         self.pub_state_timer = self.create_timer(1.0, self.publish_state)
+        
         self.get_logger().info('Running LiftAdapterTemplate')
+
+    def lift_current_floor_callback(self, msg: LiftFloor):
+        self.lift_current_floor = msg.lift_current_floor
+        #self.get_logger().info('Updating lift floor')
 
     def update_callback(self):
         new_state = self._lift_state()
@@ -95,20 +115,55 @@ class LiftAdapterTemplate(Node):
             return _retrieve_fail_error('available_floors')
         new_state.available_floors = [f for f in available_floors]
 
-        current_floor = self.lift_api.current_floor()
-        if current_floor is None:
-            return _retrieve_fail_error('current_floor')
+
+
+        #ORIGINAL CODE COMMENTED OUT -----------------------------#
+#        current_floor = self.lift_api.current_floor()
+#        if current_floor is None:
+#            return _retrieve_fail_error('current_floor')
+#        new_state.current_floor = current_floor
+#
+#        destination_floor = self.lift_api.destination_floor()
+#        if destination_floor is None:
+#            return _retrieve_fail_error('destination_floor')
+#        new_state.destination_floor = destination_floor
+#
+#        door_state = self.lift_api.lift_door_state()
+#        if door_state is None:
+#            return _retrieve_fail_error('door_state')
+#        new_state.door_state = door_state
+        #---------------------------------------------------------#
+        
+        
+        
+        #NEW CODE ------------------------------------------------#
+        current_floor = str(self.lift_current_floor)
         new_state.current_floor = current_floor
-
-        destination_floor = self.lift_api.destination_floor()
-        if destination_floor is None:
-            return _retrieve_fail_error('destination_floor')
+        
+        destination_floor = str(self.lift_current_floor)
         new_state.destination_floor = destination_floor
+        
+        if self.lift_request is None:
+            self.implied_door_state = 0
+        else:
+            if int(self.lift_request.destination_floor) == int(self.lift_current_floor):
+                self.implied_door_state = 2
+                self.lift_api.command_lift_door('1')
+                self.switch = 1
+            else:
+                self.implied_door_state = 1
+                self.switch = 0 
+        
+        if self.implied_door_state == 2 and self.switch == 1:
+            self.door_state = 2
+        elif self.switch == 0:
+            self.door_state = 0
+        
+        
+        new_state.door_state = self.door_state
+        #---------------------------------------------------------#
 
-        door_state = self.lift_api.lift_door_state()
-        if door_state is None:
-            return _retrieve_fail_error('door_state')
-        new_state.door_state = door_state
+
 
         motion_state = self.lift_api.lift_motion_state()
         if motion_state is None:
@@ -119,8 +174,10 @@ class LiftAdapterTemplate(Node):
         new_state.current_mode = LiftState.MODE_AGV
 
         if self.lift_request is not None:
-            if self.lift_request.request_type == \
-                    LiftRequest.REQUEST_END_SESSION:
+            if self.lift_request.request_type == 0: #\
+#                    LiftRequest.REQUEST_END_SESSION:
+                self.lift_api.command_lift_door('0')
+                self.switch = 0
                 new_state.session_id = ''
             else:
                 new_state.session_id = self.lift_request.session_id
@@ -133,6 +190,7 @@ class LiftAdapterTemplate(Node):
         self.lift_state_pub.publish(self.lift_state)
 
     def lift_request_callback(self, msg):
+        self.requested_destination_floor = msg.destination_floor
         if msg.lift_name != self.lift_name:
             return
 

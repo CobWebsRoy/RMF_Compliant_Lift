@@ -7,7 +7,17 @@
   <maintainer email="TODO@TODO.TODO">TODO</maintainer>
   <license>TODO: License declaration</license>
 
+  <depend>rclpy</depend>
   <exec_depend>rmf_lift_msgs</exec_depend>
+
+  <build_depend>sensor_msgs</build_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <build_depend>cv_brigde</build_depend>
+  <exec_depend>cv_brigde</exec_depend>
+  <build_depend>opencv-python</build_depend>
+  <exec_depend>opencv-python</exec_depend>
+  <build_depend>pyzbar</build_depend>
+  <exec_depend>pyzbar</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

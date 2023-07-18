@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'lift_adapter_template = lift_adapter_template.lift_adapter_template:main'
+            'lift_adapter_template = lift_adapter_template.lift_adapter_template:main',
+            'qr_decoder = lift_adapter_template.qr_decoder:main'
         ],
     },
 )
