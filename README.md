@@ -4,6 +4,10 @@ This project builds on the [previous ROS2 project](https://github.com/CobWebsRoy
 ### Hardware and Software
 - Identical to the [previous ROS2 project](https://github.com/CobWebsRoy/ROS2_Smart_Lift/tree/main#hardware)
 
+### Interfaces
+Below describes the communications between the lift adapter and a simulated fleet adapter. This project covers only the modules in blue.
+![[RMF Lift Comms](/images/RMF Lift Comms.png)](https://github.com/CobWebsRoy/RMF_Compliant_Lift/blob/main/images/RMF%20Lift%20Comms.png)
+
 ## How to use this:
 Firstly, it is assumed that you have ROS2 Humble desktop running on Ubuntu 22.04 on a Raspberry Pi. You will have to place the two packages ```lift_adapter_template``` and ```rmf_lift_msgs``` into a ROS2 workspace ```rmf_ws/src``` and build the packages. You will also have to edit the ```config.yaml``` file accordingly with the name of the lift. Be sure to install all necessary dependencies using pip. Remember to source the installation. To start the application, there are a few ROS2 nodes that have to be run: Most of the code is written in the ```lift_adapter_template``` package, which will be in the ```src``` folder in the ROS2 workspace. The ```image_tools``` package should already be built into the ROS2 Humble desktop installation.
 
