@@ -100,6 +100,7 @@ class LiftAdapterTemplate(Node):
                 self.lift_state.current_floor and \
                 self.lift_state.door_state == LiftState.DOOR_OPEN:
             self.lift_request = None
+        
 
     def _lift_state(self) -> Optional[LiftState]:
         new_state = LiftState()
@@ -146,7 +147,7 @@ class LiftAdapterTemplate(Node):
         if self.lift_request is None:
             self.implied_door_state = 0
         else:
-            if int(self.lift_request.destination_floor) == int(self.lift_current_floor):
+            if self.lift_request.request_type !=0 and int(self.lift_request.destination_floor) == int(self.lift_current_floor):
                 self.implied_door_state = 2
                 self.lift_api.command_lift_door('1')
                 self.switch = 1
@@ -177,6 +178,8 @@ class LiftAdapterTemplate(Node):
             if self.lift_request.request_type == 0: #\
 #                    LiftRequest.REQUEST_END_SESSION:
                 self.lift_api.command_lift_door('0')
+                self.lift_current_floor = 99
+                self.lift_request = None
                 self.switch = 0
                 new_state.session_id = ''
             else:
@@ -191,6 +194,7 @@ class LiftAdapterTemplate(Node):
 
     def lift_request_callback(self, msg):
         self.requested_destination_floor = msg.destination_floor
+        self.get_logger().info('Message recieved')
         if msg.lift_name != self.lift_name:
             return
 

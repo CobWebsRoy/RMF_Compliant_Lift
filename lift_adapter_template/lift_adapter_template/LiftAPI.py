@@ -83,7 +83,7 @@ class LiftAPI:
         # ------------------------ #
         # IMPLEMENT YOUR CODE HERE #
         
-        available_floors = ['0', '1', '2', '3', '4']
+        available_floors = ['0', '1', '2', '3', '4','99']
         return available_floors
         
         # ------------------------ #
